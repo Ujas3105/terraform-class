@@ -5,14 +5,14 @@ variable "cidr_block" {
 
 variable "ami" {
     type = string
-    default = "ami-0b0dcb5067f052a63"
+    default = "ami-0beaa649c482330f7"
 }
 
 variable "ports"{
     type = list(number)
     default = [ 22, 80, 8081 ]
 }
-variable "instance" {
-    type = string
-    default = "t2.micro"
-}
+# variable "instance" {
+#     type = string
+#     default = "t2.micro"
+# }

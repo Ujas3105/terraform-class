@@ -9,4 +9,3 @@ unzip 2121_wave_cafe
 cd 2121_wave_cafe
 cp -r * /var/www/html/
 systemctl restart httpd
-

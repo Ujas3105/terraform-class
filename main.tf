@@ -9,58 +9,65 @@ terraform {
 }
 provider "aws" {
   # Configuration options
-  region = "us-east-1"
+  region = "us-east-2"
   # access_key = "AKIATIRSMLQF5VKF7XWB"
   # secret_key = "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"
   
 }
-#creating vpc
-resource "aws_vpc" "ujas-vpc" {
-  cidr_block = var.cidr_block[0]
-  tags= {
-    Name = "ujas-vpc"
+# #creating vpc
+# resource "aws_vpc" "ujas-vpc" {
+#   cidr_block = var.cidr_block[0]
+#   tags= {
+#     Name = "ujas-vpc"
+#   }
+# }
+resource "aws_default_vpc" "default" {
+  tags = {
+    Name = "Default VPC"
   }
 }
 
 #SUBNET
-resource "aws_subnet" "ujas-subnet" {
-  vpc_id     = aws_vpc.ujas-vpc.id
-  cidr_block = var.cidr_block[0]
+# 
+resource "aws_default_subnet" "default_az1" {
+  availability_zone = "us-east-2a"
 
   tags = {
-    Name = "ujas-subnet"
+    Name = "Default subnet for us-east-2"
   }
 }
 #provisioning of EC2
-resource "aws_instance" "My-apache-site" {
+resource "aws_instance" "My-site" {
   ami           = var.ami
   instance_type = "t2.micro"
-  key_name = "first-class"
-  subnet_id = aws_subnet.ujas-subnet.id
-  vpc_security_group_ids = [aws_security_group.Helloworld-sg.id]
+  key_name = "ujas-key"
+  subnet_id = aws_default_subnet.default_az1.id
+  vpc_security_group_ids = [aws_security_group.ujas-sg.id]
   associate_public_ip_address = true
-  user_data = file ("./mysite.sh")
+  # user_data = file ("./mysite.sh")
+  user_data = "${file("mysite.sh")}"
   tags = {
-    Name = "Mysite"
+    Name = "My-site"
   }
 }
 
 
 #security group
-resource "aws_security_group" "Helloworld-sg" {
-  name        = "allow_tls"
+resource "aws_security_group" "ujas-sg" {
+  name        = "allow_ssh"
   description = "Allow SSH inbound traffic"
-  vpc_id      = aws_vpc.ujas-vpc.id
+  vpc_id      = aws_default_vpc.default.id
 
   dynamic ingress {
     # description      = "Allow SSH from VPC"
     iterator = port
     for_each = var.ports
     content{
-      from_port =port.value
+      from_port = port.value
       to_port = port.value
+       protocol         = "tcp"
       cidr_blocks      = ["0.0.0.0/0"]
-      protocol         = "tcp"
+   
          }
     # from_port        = 22
     # to_port          = 22
@@ -88,6 +95,32 @@ resource "aws_security_group" "Helloworld-sg" {
   }
 
   tags = {
-    Name = "allow_ssh"
+    Name = "allow_ssh and http"
   }
 }
+# # internet gateway
+# resource "aws_internet_gateway" "ujas-GW"{
+#   vpc_id = aws_vpc.ujas-vpc.id
+
+#   tags = {
+#     Name = "ujas_internetGW"
+#   }
+# }
+# # route table
+
+# resource "aws_route_table" "ujas-routetable"{
+#   vpc_id = aws_vpc.ujas-vpc.id
+#   route{
+#     cidr_block = "0.0.0.0/0"
+#     gateway_id = aws_internet_gateway.ujas-GW.id
+#   }
+# tags = {
+#       Name: "ujas_route_table"
+#     }
+# }
+# #route table association
+
+# resource "aws_route_table_association" "route_table_assoc"{
+#   subnet_id = aws_subnet.ujas-subnet.id
+#   route_table_id = aws_route_table.ujas-routetable.id
+# }
